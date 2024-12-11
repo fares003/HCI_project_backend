@@ -14,6 +14,8 @@ app.use(express.json());
 app.use("/register", require("./routers/regestier"));
 app.use("/login", require("./routers/login"));
 app.use("/lists", require("./routers/lists"));
+app.use("/items", require("./routers/items"));
+app.use("/categories", require("./routers/categories"));
 
 
 

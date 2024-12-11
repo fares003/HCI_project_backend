@@ -116,5 +116,73 @@ const getLists = async (req, res) => {
     }
   };
 
+
+
+
+  const getAllItems = async (req, res) => {
+    try {
+      const { search, category, minPrice, maxPrice } = req.query;
   
-module.exports = { createListWithItems,getLists ,getListById};
+      // Convert category query to an array if it's not already
+      const categories = Array.isArray(category) ? category : [category];
+  
+      // Build query dynamically
+      let query = {};
+  
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { 'list.category': { $regex: search, $options: 'i' } },
+        ];
+      }
+  
+      if (minPrice || maxPrice) {
+        query.price = {};
+        if (minPrice) query.price.$gte = Number(minPrice);
+        if (maxPrice) query.price.$lte = Number(maxPrice);
+      }
+  
+      let itemsQuery = Item.find(query);
+  
+      if (categories && categories.length > 0) {
+        // Support multiple categories, use $in to check if any category matches
+        itemsQuery = itemsQuery.populate({
+          path: 'list',
+          match: { category: { $in: categories.map(cat => new RegExp(cat, 'i')) } },
+          select: 'listname category',
+        });
+      } else {
+        itemsQuery = itemsQuery.populate('list', 'listname category');
+      }
+  
+      // Populate the owner information
+      itemsQuery = itemsQuery.populate('owner', 'firstname lastname email');
+  
+      const items = await itemsQuery;
+  
+      // Filter out items with no matching 'list' when filtering by category
+      const filteredItems = items.filter((item) => item.list !== null);
+  
+      res.status(200).json({ items: filteredItems });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+  
+  
+const getCategories = async (req, res) => {
+  try {
+    // Fetch distinct categories from the List schema
+    const categories = await List.distinct('category');
+
+    res.status(200).json({
+      categories: categories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+module.exports = { createListWithItems,getLists ,getListById,getAllItems,getCategories};
