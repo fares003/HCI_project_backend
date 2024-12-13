@@ -16,6 +16,10 @@ app.use("/login", require("./routers/login"));
 app.use("/lists", require("./routers/lists"));
 app.use("/items", require("./routers/items"));
 app.use("/categories", require("./routers/categories"));
+app.use("/reviews", require("./routers/reviews"));
+app.use("/reviewsUser", require("./routers/reviewsUser"));
+app.use("/chat", require("./routers/chat"));
+app.use("/notification", require("./routers/notification"));
 
 
 
