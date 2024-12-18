@@ -59,24 +59,31 @@ const sendMessage = async (req, res) => {
   
   const getMessages = async (req, res) => {
     try {
-      const { userId } = req.params;
-      
+      const { userId, targetUserId } = req.params;
+  
+      if (!userId || !targetUserId) {
+        return res.status(400).json({ message: "Both userId and targetUserId are required." });
+      }
+  
+      // Query to get messages where the authenticated user is either the sender or receiver,
+      // and the target user is the other participant.
       const messages = await Message.find({
         $or: [
-          { sender: userId },
-          { receiver: userId },
-        ]
+          { sender: userId, receiver: targetUserId },
+          { sender: targetUserId, receiver: userId },
+        ],
       })
-      .populate('sender', 'firstname lastname email')
-      .populate('receiver', 'firstname lastname email')
-      .sort({ createdAt: 1 });
-      
+        .populate('sender', 'firstname lastname email') // Populate sender details
+        .populate('receiver', 'firstname lastname email') // Populate receiver details
+        .sort({ createdAt: 1 }); // Sort messages by creation time (ascending)
+  
       res.status(200).json({ messages });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Internal server error." });
     }
   };
+  
   const markAsRead = async (req, res) => {
     try {
       const { notificationId } = req.params;

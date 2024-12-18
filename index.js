@@ -20,6 +20,10 @@ app.use("/reviews", require("./routers/reviews"));
 app.use("/reviewsUser", require("./routers/reviewsUser"));
 app.use("/chat", require("./routers/chat"));
 app.use("/notification", require("./routers/notification"));
+app.use('/wishlist',require('./routers/wishlist'))
+app.use('/insights',require('./routers/insights'))
+app.use('/trackSoldItems',require('./routers/wishlisted'))
+
 
 
 

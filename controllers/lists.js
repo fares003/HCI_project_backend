@@ -193,7 +193,6 @@ const getLists = async (req, res) => {
           { description: { $regex: search, $options: 'i' } },
           { 'list.category': { $regex: search, $options: 'i' } },
           { 'list.listname': { $regex: search, $options: 'i' } },
-
         ];
       }
   
@@ -209,7 +208,7 @@ const getLists = async (req, res) => {
         // Support multiple categories, use $in to check if any category matches
         itemsQuery = itemsQuery.populate({
           path: 'list',
-          match: { category: { $in: categories.map(cat => new RegExp(cat, 'i')) } },
+          match: { category: { $in: categories.map((cat) => new RegExp(cat, 'i')) } },
           select: 'listname category',
         });
       } else {
@@ -224,13 +223,29 @@ const getLists = async (req, res) => {
       // Filter out items with no matching 'list' when filtering by category
       const filteredItems = items.filter((item) => item.list !== null);
   
-      res.status(200).json({ items: filteredItems });
+      // Add average rating for each item
+      const itemsWithRatings = filteredItems.map((item) => {
+        let averageRating = 1; // Default to 1 if no reviews
+        if (item.reviews && item.reviews.length > 0) {
+          const totalRating = item.reviews.reduce((sum, review) => sum + review.rating, 0);
+          averageRating = totalRating / item.reviews.length;
+        }
+        // Ensure average rating is within the 1 to 5 range
+        averageRating = Math.min(Math.max(averageRating, 1), 5);
+  
+        return {
+          ...item._doc, // Spread the existing item document fields
+          averageRating, // Add averageRating as a new field
+        };
+      });
+  
+      res.status(200).json({ items: itemsWithRatings });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
     }
   };
-
+  
   const addReview = async (req, res) => {
     try {
       const { ownerId, review, rating } = req.body;  // Get rating from the request body
